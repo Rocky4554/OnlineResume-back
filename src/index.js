@@ -31,6 +31,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import serverless from "serverless-http";
 import router from "./route.js";
 
 dotenv.config();
@@ -47,18 +48,18 @@ app.use(
 
 app.use(express.json());
 
-// Routes - with /api prefix to handle all API routes
-app.use('/api', router);
+// Routes - with /api prefix
+app.use("/api", router);
 
 // Default route
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
-    
- // ✅ For Vercel: Export as serverless function
-export default app;
 
 // const PORT = process.env.PORT;
 // app.listen(PORT, () => {
 //   console.log(`✅ Server running on http://localhost:${PORT}`);
 // });
+
+// ✅ Export handler for Vercel
+export const handler = serverless(app);
