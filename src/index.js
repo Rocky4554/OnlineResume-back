@@ -31,7 +31,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import router from "../route.js";
+import router from "./route.js";
 
 dotenv.config();
 
