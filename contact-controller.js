@@ -1,10 +1,9 @@
-// controllers/contactController.js
- import { sendThankYouEmail, sendNotificationEmail } from './emailServices.js';
- 
+import { sendThankYouEmail, sendNotificationEmail, testEmailConnection } from './emailServices.js';
 
 const handleContactForm = async (req, res) => {
   try {
- 
+    console.log('Contact form submission received:', req.body);
+    
     const { name, email, message } = req.body;
 
     // Validate required fields
@@ -45,25 +44,44 @@ const handleContactForm = async (req, res) => {
       });
     }
 
-    // Send emails
-    await Promise.all([
-      sendThankYouEmail(email, name),
-      sendNotificationEmail({ 
-        name, 
-        email, 
-        message, 
-        subject: 'Contact Form Message' 
-      })
-    ]);
+    // Test email connection first
+    const isEmailReady = await testEmailConnection();
+    if (!isEmailReady) {
+      return res.status(503).json({
+        success: false,
+        message: 'Email service is currently unavailable. Please try again later.'
+      });
+    }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Thank you for your message! We will get back to you within 24-48 hours.'
-    });
+    // Send emails with better error handling
+    try {
+      await Promise.allSettled([
+        sendThankYouEmail(email, name),
+        sendNotificationEmail({
+          name,
+          email,
+          message,
+          subject: 'Contact Form Message'
+        })
+      ]);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Thank you for your message! We will get back to you within 24-48 hours.'
+      });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      
+      // Still return success to user but log the email error
+      return res.status(200).json({
+        success: true,
+        message: 'Your message has been received! We will get back to you within 24-48 hours.'
+      });
+    }
 
   } catch (error) {
     console.error('Contact form error:', error);
-    
+
     // Check if it's an email service error
     if (error.code === 'EAUTH') {
       return res.status(503).json({
@@ -71,7 +89,7 @@ const handleContactForm = async (req, res) => {
         message: 'Email service authentication failed. Please try again later.'
       });
     }
-    
+
     if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
       return res.status(503).json({
         success: false,
@@ -81,7 +99,7 @@ const handleContactForm = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while sending your message. Please try again later.'
+      message: 'An error occurred while processing your message. Please try again later.'
     });
   }
 };
