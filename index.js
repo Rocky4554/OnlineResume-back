@@ -57,9 +57,9 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`✅ Server running on http://localhost:${PORT}`);
+// });
 
 // ✅ Export handler for Vercel
-// export const handler = serverless(app);
+export const handler = serverless(app);
